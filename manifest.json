@@ -1,6 +1,6 @@
 ﻿{
     "version":  "0.1.5",
-    "baseUrl":  "https://matthew7990.github.io/AO1.1-Updates/files",
+    "baseUrl":  "https://raw.githubusercontent.com/matthew7990/AO1.1-Updates/main/files",
     "files":  [
                   {
                       "path":  "ao-local.json",
@@ -9,12 +9,12 @@
                   },
                   {
                       "path":  "launcher.json",
-                      "sha256":  "2F8F479C9DF16EDA9387D1515282A1ACE0D333D3D37A569511C65FF0B45D72E4",
-                      "size":  271
+                      "sha256":  "632E881155F2858EA596A451DDF406A616ECCC264B13A7F5BCA75247CAC1798F",
+                      "size":  292
                   },
                   {
                       "path":  "version.json",
-                      "sha256":  "D877F0D2F32184502B94BED0EAA40D4770259924F9264F3EF8D1B1FA05EF1676",
+                      "sha256":  "C9E505850B60F765F05294D71EB3E8FD4E683ACEEEF4F0FE8013E2BEBC825D12",
                       "size":  87
                   },
                   {
