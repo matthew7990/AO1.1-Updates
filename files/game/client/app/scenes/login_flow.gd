@@ -1,6 +1,6 @@
 extends Control
 
-## Port de AO/client-godot LoginFlow.cs — connect + cuenta + crear PJ en un solo flujo.
+## Flujo de login: conectar, cuenta y crear PJ en una sola pantalla.
 
 enum Screen { CONNECT, ACCOUNT, CREATE_CHAR }
 

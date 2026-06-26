@@ -1,5 +1,5 @@
 ﻿{
-    "version":  "0.1.6",
+    "version":  "0.1.7",
     "baseUrl":  "https://raw.githubusercontent.com/matthew7990/AO1.1-Updates/main/files",
     "files":  [
                   {
@@ -14,7 +14,7 @@
                   },
                   {
                       "path":  "version.json",
-                      "sha256":  "B38E3533D9E8ED1232B37668F45AA739722D73804389DECE4920350A945AB34D",
+                      "sha256":  "A04B92AB10F06DC904098BBC99B824CEDBE0F687B3C316E57E0553EFBECFF072",
                       "size":  87
                   },
                   {
@@ -66,8 +66,8 @@
                   },
                   {
                       "path":  "game/client/app/project.godot",
-                      "sha256":  "B308D13BAC9382C41C993BC3760725B537AB29A90856D1A59C8794E09698ADE4",
-                      "size":  5671
+                      "sha256":  "DF85704D8A4E08E818DCB76CC7025479D72A33E0A62F98AC887359A7B4241087",
+                      "size":  5885
                   },
                   {
                       "path":  "game/client/app/.godot/.gdignore",
@@ -143,6 +143,11 @@
                       "path":  "game/client/app/.godot/mono/temp/bin/Release/GodotSharp.dll",
                       "sha256":  "C09B4A1BE6A2D56FFBD4992EE6E5EF0CF406D49B99620DA5C462DA261C7F787E",
                       "size":  5928960
+                  },
+                  {
+                      "path":  "game/client/app/assets/branding/splash.png",
+                      "sha256":  "48095D24841DE314103D1AD0385CEBD2901C0C5AD72465684B37702575546F26",
+                      "size":  57992
                   },
                   {
                       "path":  "game/client/app/assets/fx/item_auras/blood_splatter_sheet.png",
@@ -596,8 +601,8 @@
                   },
                   {
                       "path":  "game/client/app/autoload/game_client.gd",
-                      "sha256":  "F3D49BA246E2AEB0D8AECB7A261662EBDF3FC978067C37729AADB8C055A59F7A",
-                      "size":  9413
+                      "sha256":  "2803E100F0F0DEF747F25F3BDD0AFCC5C867769523658A7914224808BFEA01BB",
+                      "size":  9415
                   },
                   {
                       "path":  "game/client/app/autoload/game_client.gd.uid",
@@ -656,8 +661,8 @@
                   },
                   {
                       "path":  "game/client/app/scenes/login_flow.gd",
-                      "sha256":  "5AB106C2CDF56FB694A5BA3547124F87640482EAF27176D7E0E64EC379A2E75F",
-                      "size":  15664
+                      "sha256":  "69F7A5D61D2DF0FE4AF1CCF0EF785507F7A6E9A440891938716B18A2743BD1DD",
+                      "size":  15642
                   },
                   {
                       "path":  "game/client/app/scenes/login_flow.gd.uid",
@@ -39918,8 +39923,8 @@
     "delete":  [
 
                ],
-    "launcherVersion":  "0.1.6",
+    "launcherVersion":  "0.1.7",
     "launcherUrl":  "",
     "launcherSha256":  "",
-    "notes":  "Actualizacion incremental 0.1.6"
+    "notes":  "Actualizacion incremental 0.1.7"
 }

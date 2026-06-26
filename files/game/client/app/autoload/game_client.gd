@@ -306,5 +306,5 @@ func _friendly_error(err: Error) -> String:
 		_:
 			var raw := error_string(err)
 			if raw.to_lower().contains("already"):
-				return "Conexion ocupada. Cerra Godot y volve a abrir, o usa otro email."
+				return "Conexion ocupada. Cerra el juego y volve a abrir, o usa otro email."
 			return "Error de red: %s" % raw
