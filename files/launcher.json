@@ -4,6 +4,6 @@
     "autoPlay":  false,
     "skipUpdates":  false,
     "resolution":  "1920x1080",
-    "updateManifestUrl":  "http://192.168.1.4:8080/manifest.json",
-    "serverHost":  "192.168.1.4"
+    "updateManifestUrl":  "https://matthew7990.github.io/AO1.1-Updates/manifest.json",
+    "serverHost":  "181.110.92.215"
 }

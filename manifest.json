@@ -1,5 +1,5 @@
 ﻿{
-    "version":  "0.1.4",
+    "version":  "0.1.5",
     "baseUrl":  "https://matthew7990.github.io/AO1.1-Updates/files",
     "files":  [
                   {
@@ -9,12 +9,12 @@
                   },
                   {
                       "path":  "launcher.json",
-                      "sha256":  "B69ED471D9F858F75B398F3709511C0AD579FF22AD287C67E6027E427E46E962",
-                      "size":  248
+                      "sha256":  "2F8F479C9DF16EDA9387D1515282A1ACE0D333D3D37A569511C65FF0B45D72E4",
+                      "size":  271
                   },
                   {
                       "path":  "version.json",
-                      "sha256":  "AF8CC3848F1BE7DEF312F3843331E13BC4B2515A859750373AEC1C0579931715",
+                      "sha256":  "D877F0D2F32184502B94BED0EAA40D4770259924F9264F3EF8D1B1FA05EF1676",
                       "size":  87
                   },
                   {
@@ -39518,11 +39518,8 @@
     "delete":  [
 
                ],
-    "packageUrl":  "",
-    "packageSha256":  "",
-    "packageSize":  0,
-    "launcherVersion":  "0.1.4",
+    "launcherVersion":  "0.1.5",
     "launcherUrl":  "",
     "launcherSha256":  "",
-    "notes":  "Actualizacion incremental 0.1.4"
+    "notes":  "Actualizacion incremental 0.1.5"
 }
