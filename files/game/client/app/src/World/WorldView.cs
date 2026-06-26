@@ -17,6 +17,40 @@ public partial class WorldView : Node2D
     private CsmMap? _drawMap;
     private readonly WarpPeekTileCache _peekCache = new();
     private static readonly CharacterMotion PeekNpcMotion = new();
+    private int _drawTickMs;
+    private ulong _drawNowMs;
+
+    private readonly record struct VisibleCharacterEntry(
+        int TileX,
+        int TileY,
+        int Body,
+        int Head,
+        int Heading,
+        CharacterMotion Motion,
+        int Weapon,
+        int Shield,
+        string Name,
+        bool DrawName,
+        bool IsNpc,
+        int MinHp,
+        int MaxHp,
+        int Privilege,
+        int Helmet,
+        short CharIndex,
+        CharacterFx Fx);
+
+    private readonly record struct PeekNpcEntry(
+        int VirtX,
+        int VirtY,
+        int Body,
+        int Head,
+        int Heading,
+        int Weapon,
+        int Shield,
+        string Name,
+        bool DrawName,
+        int MinHp,
+        int MaxHp);
 
 
     public void Bind(WorldSession session, GameResources? resources)
@@ -78,6 +112,9 @@ public partial class WorldView : Node2D
             return;
         }
 
+        _drawNowMs = Time.GetTicksMsec();
+        _drawTickMs = (int)_drawNowMs;
+
         var screen = _loginPreview ? _loginPreviewScreen : GameViewport.LogicalSize;
         DrawRect(new Rect2(0, 0, screen.X, screen.Y), new Color(0.02f, 0.02f, 0.04f));
 
@@ -123,6 +160,8 @@ public partial class WorldView : Node2D
         _drawMap = map;
         var camera = WorldCamera.Create(_session!, screen, centerTileX, centerTileY);
         var hasPeek = peekSlices is { Count: > 0 };
+        var visibleRows = BuildVisibleCharacterRows(centerTileX, centerTileY);
+        var peekRows = hasPeek ? BuildPeekNpcRows() : null;
         if (hasPeek)
         {
             EnsurePeekCache(screen, peekSlices!);
@@ -148,7 +187,7 @@ public partial class WorldView : Node2D
         {
             for (var y = camera.MinBufferedY; y <= camera.MaxBufferedY; y++)
             {
-                DrawCharacterBodiesAtRow(y, screen, camera, centerTileX, centerTileY);
+                DrawCharacterBodiesAtRow(y, screen, camera, visibleRows);
                 DrawObjects(camera, camera.MinBufferedX, camera.MaxBufferedX, y, y, afterLayer2: false);
                 if (hasPeek)
                 {
@@ -158,12 +197,12 @@ public partial class WorldView : Node2D
                 if (hasPeek)
                 {
                     DrawPeekTileLayer(camera, 2, buffered: true, screen, rowY: y);
-                    DrawPeekCharacterBodiesAtRow(y, screen, camera);
+                    DrawPeekCharacterBodiesAtRow(y, screen, camera, peekRows!);
                 }
-                DrawCharacterHeadsAtRow(y, screen, camera, centerTileX, centerTileY);
+                DrawCharacterHeadsAtRow(y, screen, camera, visibleRows);
                 if (hasPeek)
                 {
-                    DrawPeekCharacterHeadsAtRow(y, screen, camera);
+                    DrawPeekCharacterHeadsAtRow(y, screen, camera, peekRows!);
                 }
             }
         }
@@ -405,6 +444,104 @@ public partial class WorldView : Node2D
         DrawDebugLabel(new Vector2(8, 24), "ROJO=grid 1..100 | NARANJA=corte warp | AMARILLO=slice (AO_PEEK_DEBUG_GRID=1 para celdas)", seamColor);
     }
 
+    private Dictionary<int, List<VisibleCharacterEntry>> BuildVisibleCharacterRows(int centerTileX, int centerTileY)
+    {
+        var rows = new Dictionary<int, List<VisibleCharacterEntry>>();
+        if (_session is null)
+        {
+            return rows;
+        }
+
+        ResolveSessionAppearance(out var selfBody, out var selfHead, out var selfWeapon, out var selfShield, out var selfHelmet);
+        AddVisibleCharacterRow(rows, new VisibleCharacterEntry(
+            centerTileX,
+            centerTileY,
+            selfBody,
+            selfHead,
+            _session.Heading,
+            _session.Motion,
+            selfWeapon,
+            selfShield,
+            _session.CharacterName,
+            DrawName: true,
+            IsNpc: false,
+            MinHp: 0,
+            MaxHp: 0,
+            Privilege: _session.Privilege,
+            Helmet: selfHelmet,
+            CharIndex: (short)_session.CharIndex,
+            Fx: _session.SelfFx));
+
+        foreach (var ch in _session.Characters.All)
+        {
+            if (ch.Invisible)
+            {
+                continue;
+            }
+
+            AddVisibleCharacterRow(rows, new VisibleCharacterEntry(
+                ch.TileX,
+                ch.TileY,
+                ch.Body,
+                ch.Head,
+                ch.Heading,
+                ch.Motion,
+                ch.Weapon,
+                ch.Shield,
+                ch.Name,
+                DrawName: ch.IsNpc && ch.Name.Length > 0,
+                IsNpc: ch.IsNpc,
+                MinHp: ch.MinHp,
+                MaxHp: ch.MaxHp,
+                Privilege: ch.Privilege,
+                Helmet: ch.Helmet,
+                CharIndex: ch.CharIndex,
+                Fx: ch.Fx));
+        }
+
+        return rows;
+    }
+
+    private static void AddVisibleCharacterRow(
+        Dictionary<int, List<VisibleCharacterEntry>> rows,
+        VisibleCharacterEntry entry)
+    {
+        var row = entry.Motion.CharacterSortRow(entry.TileY);
+        if (!rows.TryGetValue(row, out var list))
+        {
+            list = [];
+            rows[row] = list;
+        }
+        list.Add(entry);
+    }
+
+    private Dictionary<int, List<PeekNpcEntry>> BuildPeekNpcRows()
+    {
+        var rows = new Dictionary<int, List<PeekNpcEntry>>();
+        foreach (var npc in _peekCache.Npcs)
+        {
+            var row = PeekNpcMotion.CharacterSortRow(npc.VirtY);
+            if (!rows.TryGetValue(row, out var list))
+            {
+                list = [];
+                rows[row] = list;
+            }
+            list.Add(new PeekNpcEntry(
+                npc.VirtX,
+                npc.VirtY,
+                npc.Body,
+                npc.Head,
+                npc.Heading,
+                npc.Weapon,
+                npc.Shield,
+                npc.Name,
+                npc.ShowName && npc.Name.Length > 0,
+                npc.MinHp,
+                npc.MaxHp));
+        }
+        return rows;
+    }
+
     private static Rect2 VirtTileScreenRect(WorldCamera camera, int virtX, int virtY) =>
         new(
             camera.TileToScreenX(virtX, buffered: true),
@@ -596,14 +733,14 @@ public partial class WorldView : Node2D
 
     private void DrawDroppedItemEnchantmentBack(int grh, Rect2 dest, int elementalTags, int objType)
     {
-        var ticks = (float)Time.GetTicksMsec();
+        var ticks = (float)_drawTickMs;
         var pulse = 0.5f + 0.5f * Mathf.Sin(ticks / 240.0f);
         DrawReplicaAuraLayers(grh, dest, elementalTags, objType, ticks, pulse, 0.92f);
     }
 
     private void DrawDroppedItemEnchantmentFront(int grh, Rect2 dest, int elementalTags, int objType)
     {
-        var ticks = (float)Time.GetTicksMsec();
+        var ticks = (float)_drawTickMs;
         var pulse = 0.5f + 0.5f * Mathf.Sin(ticks / 240.0f);
         DrawReplicaAuraHighlight(grh, dest, elementalTags, objType, ticks, pulse, 0.84f);
         ItemAuraVisuals.DrawSparkles(this, dest, elementalTags, objType, pulse, ticks, 0.9f);
@@ -643,15 +780,15 @@ public partial class WorldView : Node2D
             out body, out head, out weapon, out shield, out helmet);
     }
 
-    private void DrawPeekCharacterBodiesAtRow(int rowY, Vector2 screen, WorldCamera camera)
+    private void DrawPeekCharacterBodiesAtRow(int rowY, Vector2 screen, WorldCamera camera, Dictionary<int, List<PeekNpcEntry>> peekRows)
     {
-        var screenRect = new Rect2(0, 0, screen.X, screen.Y);
-        foreach (var npc in _peekCache.Npcs)
+        if (!peekRows.TryGetValue(rowY, out var npcs))
         {
-            if (PeekNpcMotion.CharacterSortRow(npc.VirtY) != rowY)
-            {
-                continue;
-            }
+            return;
+        }
+        var screenRect = new Rect2(0, 0, screen.X, screen.Y);
+        foreach (var npc in npcs)
+        {
             if (IsVirtAnchorInPlayableMap(npc.VirtX, npc.VirtY))
             {
                 continue;
@@ -664,20 +801,20 @@ public partial class WorldView : Node2D
             }
             DrawCharacterBody(screen, camera, npc.VirtX, npc.VirtY, npc.Body, npc.Head, npc.Heading,
                 PeekNpcMotion, npc.Weapon, npc.Shield, npc.Name,
-                drawName: npc.ShowName && npc.Name.Length > 0, isNpc: true,
+                drawName: npc.DrawName, isNpc: true,
                 minHp: npc.MinHp, maxHp: npc.MaxHp);
         }
     }
 
-    private void DrawPeekCharacterHeadsAtRow(int rowY, Vector2 screen, WorldCamera camera)
+    private void DrawPeekCharacterHeadsAtRow(int rowY, Vector2 screen, WorldCamera camera, Dictionary<int, List<PeekNpcEntry>> peekRows)
     {
-        var screenRect = new Rect2(0, 0, screen.X, screen.Y);
-        foreach (var npc in _peekCache.Npcs)
+        if (!peekRows.TryGetValue(rowY, out var npcs))
         {
-            if (PeekNpcMotion.CharacterSortRow(npc.VirtY) != rowY)
-            {
-                continue;
-            }
+            return;
+        }
+        var screenRect = new Rect2(0, 0, screen.X, screen.Y);
+        foreach (var npc in npcs)
+        {
             if (IsVirtAnchorInPlayableMap(npc.VirtX, npc.VirtY))
             {
                 continue;
@@ -692,63 +829,30 @@ public partial class WorldView : Node2D
         }
     }
 
-    private void DrawCharacterBodiesAtRow(int rowY, Vector2 screen, WorldCamera camera, int? selfTileX = null, int? selfTileY = null)
+    private void DrawCharacterBodiesAtRow(int rowY, Vector2 screen, WorldCamera camera, Dictionary<int, List<VisibleCharacterEntry>> visibleRows)
     {
-        if (_session is null)
+        if (!visibleRows.TryGetValue(rowY, out var characters))
         {
             return;
         }
-        var playerX = selfTileX ?? _session.TileX;
-        var playerY = selfTileY ?? _session.TileY;
-        if (_session.Motion.CharacterSortRow(playerY) == rowY)
+        foreach (var ch in characters)
         {
-            ResolveSessionAppearance(out var body, out var head, out var weapon, out var shield, out _);
-            DrawCharacterBody(screen, camera, playerX, playerY, body, head,
-                _session.Heading, _session.Motion, weapon, shield, _session.CharacterName,
-                drawName: true, isNpc: false, minHp: 0, maxHp: 0, privilege: _session.Privilege,
-                weaponTags: EquippedTagsFor(2));
-            DrawCharacterFx(camera, playerX, playerY, _session.Motion, body, _session.SelfFx);
-        }
-        foreach (var ch in _session.Characters.All)
-        {
-            if (ch.Invisible)
-            {
-                continue;
-            }
-            if (ch.Motion.CharacterSortRow(ch.TileY) == rowY)
-            {
-                DrawCharacterBody(screen, camera, ch.TileX, ch.TileY, ch.Body, ch.Head, ch.Heading, ch.Motion,
-                    ch.Weapon, ch.Shield, ch.Name, drawName: ch.IsNpc && ch.Name.Length > 0,
-                    isNpc: ch.IsNpc, minHp: ch.MinHp, maxHp: ch.MaxHp, privilege: ch.Privilege);
-                DrawCharacterFx(camera, ch.TileX, ch.TileY, ch.Motion, ch.Body, ch.Fx);
-            }
+            DrawCharacterBody(screen, camera, ch.TileX, ch.TileY, ch.Body, ch.Head, ch.Heading, ch.Motion,
+                ch.Weapon, ch.Shield, ch.Name, ch.DrawName, ch.IsNpc, ch.MinHp, ch.MaxHp, ch.Privilege,
+                weaponTags: ch.CharIndex == _session?.CharIndex ? EquippedTagsFor(2) : 0);
+            DrawCharacterFx(camera, ch.TileX, ch.TileY, ch.Motion, ch.Body, ch.Fx);
         }
     }
 
-    private void DrawCharacterHeadsAtRow(int rowY, Vector2 screen, WorldCamera camera, int? selfTileX = null, int? selfTileY = null)
+    private void DrawCharacterHeadsAtRow(int rowY, Vector2 screen, WorldCamera camera, Dictionary<int, List<VisibleCharacterEntry>> visibleRows)
     {
-        if (_session is null)
+        if (!visibleRows.TryGetValue(rowY, out var characters))
         {
             return;
         }
-        var playerX = selfTileX ?? _session.TileX;
-        var playerY = selfTileY ?? _session.TileY;
-        if (_session.Motion.CharacterSortRow(playerY) == rowY)
+        foreach (var ch in characters)
         {
-            ResolveSessionAppearance(out var body, out var head, out _, out _, out var helmet);
-            DrawCharacterHeadFor(screen, camera, playerX, playerY, body, head,
-                _session.Heading, _session.Motion, _session.CharIndex, helmet);
-        }
-        foreach (var ch in _session.Characters.All)
-        {
-            if (ch.Invisible)
-            {
-                continue;
-            }
-            if (ch.Motion.CharacterSortRow(ch.TileY) == rowY)
-            {
-                DrawCharacterHeadFor(screen, camera, ch.TileX, ch.TileY, ch.Body, ch.Head, ch.Heading, ch.Motion, ch.CharIndex, ch.Helmet);
-            }
+            DrawCharacterHeadFor(screen, camera, ch.TileX, ch.TileY, ch.Body, ch.Head, ch.Heading, ch.Motion, ch.CharIndex, ch.Helmet);
         }
     }
 
@@ -765,7 +869,7 @@ public partial class WorldView : Node2D
         {
             return;
         }
-        if ((long)Time.GetTicksMsec() - fx.StartedMs > 2500)
+        if (Time.GetTicksMsec() - (ulong)fx.StartedMs > 2500UL)
         {
             fx.Clear();
         }
@@ -922,11 +1026,11 @@ public partial class WorldView : Node2D
             color);
     }
 
-    private static Color NameColor(bool isNpc, int privilege)
+    private Color NameColor(bool isNpc, int privilege)
     {
         if (privilege >= 5)
         {
-            var pulse = 0.5f + 0.5f * Mathf.Sin(Time.GetTicksMsec() / 220.0f);
+            var pulse = 0.5f + 0.5f * Mathf.Sin(_drawTickMs / 220.0f);
             return new Color(1f, 0.78f + 0.16f * pulse, 0.18f + 0.25f * pulse);
         }
         if (privilege > 0)
@@ -956,7 +1060,7 @@ public partial class WorldView : Node2D
         CharacterMotion motion, int weaponTags = 0)
     {
         var moving = motion.IsMoving;
-        var nowMs = (int)Time.GetTicksMsec();
+        var nowMs = _drawTickMs;
         var weaponGrh = _resources?.Weapons?.GetGrh(weapon, heading) ?? 0;
         var shieldGrh = _resources?.Shields?.GetGrh(shield, heading) ?? 0;
         motion.AdvanceWeaponAnim(nowMs, _resources?.Grhs, weaponGrh, shieldGrh);
@@ -1020,14 +1124,14 @@ public partial class WorldView : Node2D
 
     private void DrawEquippedItemEnchantmentBack(int grh, Rect2 dest, int elementalTags, int animTick)
     {
-        var ticks = (float)Time.GetTicksMsec();
+        var ticks = (float)_drawTickMs;
         var pulse = 0.5f + 0.5f * Mathf.Sin(ticks / 180.0f);
         DrawReplicaAuraLayers(grh, dest, elementalTags, 2, ticks, pulse, 0.9f, animTick);
     }
 
     private void DrawEquippedItemEnchantmentFront(int grh, Rect2 dest, int elementalTags, int animTick)
     {
-        var ticks = (float)Time.GetTicksMsec();
+        var ticks = (float)_drawTickMs;
         var pulse = 0.5f + 0.5f * Mathf.Sin(ticks / 180.0f);
         DrawReplicaAuraHighlight(grh, dest, elementalTags, 2, ticks, pulse, 0.82f, animTick);
         ItemAuraVisuals.DrawSparkles(this, dest, elementalTags, 2, pulse, ticks, 0.95f);
@@ -1082,7 +1186,7 @@ public partial class WorldView : Node2D
         }
         if (_session is not null)
         {
-            var fx = _session.FloatingTexts.GetActive((short)charIndex, Time.GetTicksMsec());
+            var fx = _session.FloatingTexts.GetActive((short)charIndex, _drawNowMs);
             if (fx.Count > 0)
             {
                 CharacterFloatingTextDraw.DrawOverHead(
@@ -1136,7 +1240,7 @@ public partial class WorldView : Node2D
         {
             return null;
         }
-        var tick = animTick >= 0 ? animTick : (int)Time.GetTicksMsec();
+        var tick = animTick >= 0 ? animTick : _drawTickMs;
         return _resources.Grhs.ResolveDrawable(grhIndex, tick);
     }
 

@@ -1,5 +1,5 @@
 ﻿{
-    "version":  "0.1.9",
+    "version":  "0.1.10",
     "baseUrl":  "https://raw.githubusercontent.com/matthew7990/AO1.1-Updates/main/files",
     "files":  [
                   {
@@ -14,8 +14,8 @@
                   },
                   {
                       "path":  "version.json",
-                      "sha256":  "1E1591551C58AD80D94C041DFBB59C8BA9BFC1097E0FA952DD7A633C0E4CFF05",
-                      "size":  87
+                      "sha256":  "5E858F58C0502DF4B3B6813FECE43F84ABF7B43416911BC694653F4F69FE0C73",
+                      "size":  88
                   },
                   {
                       "path":  "game/client/Argentum.exe",
@@ -101,13 +101,13 @@
                   },
                   {
                       "path":  "game/client/app/.godot/mono/temp/bin/Debug/Argentum.Client.dll",
-                      "sha256":  "487BB60303A72499E8B3FE0B8DE5553B2E9D37C8921C011A78DCA09472F30C68",
-                      "size":  526336
+                      "sha256":  "8155329BE368F38BCAB58A99C47718CAEF18F530B2FE53DB190001FCEFFB482A",
+                      "size":  535552
                   },
                   {
                       "path":  "game/client/app/.godot/mono/temp/bin/Debug/Argentum.Client.pdb",
-                      "sha256":  "CF6D8E445DB77AE62CB59D5B42D00BCB51100FB54F8C1002D878A0F4F62F53F3",
-                      "size":  295864
+                      "sha256":  "96A3CBECF9020FABEC33F7168825CBFC5EA26FB86BF83378E2A91090527718E7",
+                      "size":  298096
                   },
                   {
                       "path":  "game/client/app/.godot/mono/temp/bin/Debug/Argentum.Client.runtimeconfig.json",
@@ -1896,8 +1896,8 @@
                   },
                   {
                       "path":  "game/client/app/src/World/WorldView.cs",
-                      "sha256":  "5A76921CA62920302B82E7D7A683CADBDF932848B557C1A4E4EDA802D2B172CB",
-                      "size":  43526
+                      "sha256":  "BF8F64FB753EFB2F5A708EFDC31887D745181A87F021BDCA74F37CA47BBBC983",
+                      "size":  45901
                   },
                   {
                       "path":  "game/client/app/src/World/WorldView.cs.uid",
@@ -39928,8 +39928,8 @@
     "delete":  [
 
                ],
-    "launcherVersion":  "0.1.9",
+    "launcherVersion":  "0.1.10",
     "launcherUrl":  "",
     "launcherSha256":  "",
-    "notes":  "Actualizacion incremental 0.1.9"
+    "notes":  "Actualizacion incremental 0.1.10"
 }
