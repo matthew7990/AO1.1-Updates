@@ -1,11 +1,11 @@
-; Godot 4.7 Mono — port directo desde AO/client-godot (referencia VB6).
+﻿; Argentum Online client.
 
 config_version=5
 
 [application]
 
 config/name="Argentum Online"
-config/description="Cliente AO — port C# desde referencia oficial"
+config/description="Argentum Online"
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.7", "C#", "GL Compatibility")
 
