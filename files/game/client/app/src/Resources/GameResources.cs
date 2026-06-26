@@ -56,7 +56,6 @@ public sealed class GameResources
             var textures = new TextureCache(root);
             heads.ResolveDirectionFallbacks(grhs, textures);
             helmets.ResolveDirectionFallbacks(grhs, textures);
-            heads.LogSample(1);
             await Report(progress, "Cargando objetos", 58);
             var objects = ObjectCatalog.Load(root);
             var items = ItemCatalog.TryLoad(root);

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using Godot;
 
@@ -19,55 +20,104 @@ public sealed class HeadCatalog
     }
 
     /// <summary>
-    /// Muchas cabezas AO solo tienen arte en N/E o S/W; si el grh del .ind apunta a fila vacía,
-    /// usar la dirección opuesta (mismo comportamiento visual que el cliente con alpha correcto).
+    /// Muchas cabezas AO solo tienen arte en N/E o S/W; si el grh del .ind apunta a fila vacia,
+    /// usar la direccion opuesta.
     /// </summary>
     public void ResolveDirectionFallbacks(GrhCatalog grhs, TextureCache textures)
     {
         int[] opposite = [0, 3, 4, 1, 2];
+        var opaqueByGrh = new Dictionary<int, bool>();
+
         for (var i = 1; i < _heads.Length; i++)
         {
-            if (_heads[i] is null)
+            var head = _heads[i];
+            if (head is null)
             {
                 continue;
             }
+
             for (var h = 1; h <= 4; h++)
             {
-                var grh = _heads[i][h];
-                if (grh <= 0 || GrhHasOpaquePixels(grhs, textures, grh))
+                var grh = head[h];
+                if (grh <= 0 || GrhHasOpaquePixels(grhs, textures, opaqueByGrh, grh))
                 {
                     continue;
                 }
-                var fallback = _heads[i][opposite[h]];
-                if (fallback > 0 && GrhHasOpaquePixels(grhs, textures, fallback))
+
+                var fallback = head[opposite[h]];
+                if (fallback > 0 && GrhHasOpaquePixels(grhs, textures, opaqueByGrh, fallback))
                 {
-                    Godot.GD.Print($"[HeadCatalog] head={i} hdg={h} grh={grh} vacío → fallback hdg={opposite[h]} grh={fallback}");
-                    _heads[i][h] = fallback;
+                    head[h] = fallback;
                 }
             }
         }
     }
 
-    private static bool GrhHasOpaquePixels(GrhCatalog grhs, TextureCache textures, int grhIndex)
+    private static bool GrhHasOpaquePixels(
+        GrhCatalog grhs,
+        TextureCache textures,
+        Dictionary<int, bool> opaqueByGrh,
+        int grhIndex)
     {
+        if (opaqueByGrh.TryGetValue(grhIndex, out var cached))
+        {
+            return cached;
+        }
+
         var def = grhs.Get(grhIndex);
         if (def is null || def.FileNum <= 0)
         {
+            opaqueByGrh[grhIndex] = false;
             return false;
         }
-        var texture = textures.Get(def.FileNum);
-        if (texture is null)
-        {
-            return false;
-        }
-        var image = texture.GetImage();
+
+        var image = textures.GetImage(def.FileNum);
         if (image is null)
         {
+            opaqueByGrh[grhIndex] = false;
             return false;
         }
-        for (var y = def.SY; y < def.SY + def.PixelHeight; y++)
+
+        if (HasOpaqueSample(image, def.SX, def.SY, def.PixelWidth, def.PixelHeight))
         {
-            for (var x = def.SX; x < def.SX + def.PixelWidth; x++)
+            opaqueByGrh[grhIndex] = true;
+            return true;
+        }
+
+        var endY = def.SY + def.PixelHeight;
+        var endX = def.SX + def.PixelWidth;
+        for (var y = def.SY; y < endY; y++)
+        {
+            for (var x = def.SX; x < endX; x++)
+            {
+                if (image.GetPixel(x, y).A > 10)
+                {
+                    opaqueByGrh[grhIndex] = true;
+                    return true;
+                }
+            }
+        }
+
+        opaqueByGrh[grhIndex] = false;
+        return false;
+    }
+
+    private static bool HasOpaqueSample(Image image, int sx, int sy, int width, int height)
+    {
+        const int sampleGrid = 4;
+        if (width <= 0 || height <= 0)
+        {
+            return false;
+        }
+
+        var stepX = System.Math.Max(1, width / sampleGrid);
+        var stepY = System.Math.Max(1, height / sampleGrid);
+        var endX = sx + width;
+        var endY = sy + height;
+
+        for (var y = sy; y < endY; y += stepY)
+        {
+            for (var x = sx; x < endX; x += stepX)
             {
                 if (image.GetPixel(x, y).A > 10)
                 {
@@ -75,6 +125,7 @@ public sealed class HeadCatalog
                 }
             }
         }
+
         return false;
     }
 
@@ -88,7 +139,6 @@ public sealed class HeadCatalog
         var path = Path.Combine(root, "init", fileName);
         using var stream = File.OpenRead(path);
         using var reader = new BinaryReader(stream);
-        // MiCabecera (255-byte text) + DIU metadata; Numheads is int16 at offset 263.
         stream.Seek(263, SeekOrigin.Begin);
         var count = reader.ReadInt16();
         var heads = new int[count + 1][];
@@ -109,7 +159,8 @@ public sealed class HeadCatalog
         {
             return;
         }
-        Godot.GD.Print(
+
+        GD.Print(
             $"[HeadCatalog] head={headIndex} grhs N={_heads[headIndex][1]} E={_heads[headIndex][2]} " +
             $"S={_heads[headIndex][3]} W={_heads[headIndex][4]}");
     }

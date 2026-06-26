@@ -1,9 +1,5 @@
 ﻿{
-    "windowed":  false,
     "serverPort":  7667,
-    "autoPlay":  false,
-    "skipUpdates":  false,
-    "resolution":  "1920x1080",
-    "updateManifestUrl":  "https://raw.githubusercontent.com/matthew7990/AO1.1-Updates/main/manifest.json",
-    "serverHost":  "181.110.92.215"
+    "serverHost":  "181.110.92.215",
+    "updateManifestUrl":  "https://raw.githubusercontent.com/matthew7990/AO1.1-Updates/main/manifest.json"
 }

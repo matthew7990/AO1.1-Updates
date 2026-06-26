@@ -9,17 +9,18 @@ public sealed class TextureCache
     private static readonly string[] Extensions = [".png", ".bmp", ".jpg", ".gif"];
 
     private readonly string _root;
+    private readonly Dictionary<int, Image> _images = new();
     private readonly Dictionary<int, Texture2D> _textures = new();
 
     public TextureCache(string root) => _root = root;
 
-    public Texture2D? Get(int fileNum)
+    public Image? GetImage(int fileNum)
     {
         if (fileNum <= 0)
         {
             return null;
         }
-        if (_textures.TryGetValue(fileNum, out var cached))
+        if (_images.TryGetValue(fileNum, out var cached))
         {
             return cached;
         }
@@ -35,10 +36,29 @@ public sealed class TextureCache
             {
                 image.Convert(Image.Format.Rgba8);
             }
-            var texture = ImageTexture.CreateFromImage(image);
-            _textures[fileNum] = texture;
-            return texture;
+            _images[fileNum] = image;
+            return image;
         }
         return null;
+    }
+
+    public Texture2D? Get(int fileNum)
+    {
+        if (fileNum <= 0)
+        {
+            return null;
+        }
+        if (_textures.TryGetValue(fileNum, out var cached))
+        {
+            return cached;
+        }
+        var image = GetImage(fileNum);
+        if (image is null)
+        {
+            return null;
+        }
+        var texture = ImageTexture.CreateFromImage(image);
+        _textures[fileNum] = texture;
+        return texture;
     }
 }

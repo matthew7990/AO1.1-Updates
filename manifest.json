@@ -1,5 +1,5 @@
 ﻿{
-    "version":  "0.1.8",
+    "version":  "0.1.9",
     "baseUrl":  "https://raw.githubusercontent.com/matthew7990/AO1.1-Updates/main/files",
     "files":  [
                   {
@@ -9,12 +9,12 @@
                   },
                   {
                       "path":  "launcher.json",
-                      "sha256":  "632E881155F2858EA596A451DDF406A616ECCC264B13A7F5BCA75247CAC1798F",
-                      "size":  292
+                      "sha256":  "620C2F439C7C189D5D48FD88641313095D64218287079F4995A0CFFE5A5368EA",
+                      "size":  181
                   },
                   {
                       "path":  "version.json",
-                      "sha256":  "168DFF33002B6EE7CEC198A79956D28A67B3988CFC1F05C626086515BC6BB5FA",
+                      "sha256":  "1E1591551C58AD80D94C041DFBB59C8BA9BFC1097E0FA952DD7A633C0E4CFF05",
                       "size":  87
                   },
                   {
@@ -60,6 +60,11 @@
                       "size":  260
                   },
                   {
+                      "path":  "game/client/app/icon.svg.download",
+                      "sha256":  "1AB5043C74172BA5AED61D725A1D075CCCA331031B564C820CB1784645C2EAB4",
+                      "size":  256
+                  },
+                  {
                       "path":  "game/client/app/icon.svg.import",
                       "sha256":  "25665229FE24D904B119AED1DFD8FA238FFFC8076FB1BC2297414A46E2AC22ED",
                       "size":  1012
@@ -96,13 +101,13 @@
                   },
                   {
                       "path":  "game/client/app/.godot/mono/temp/bin/Debug/Argentum.Client.dll",
-                      "sha256":  "35CBD8EE919627FBAE96B69A66898FB2522B7FE56CF1983E8776C583022AAFDE",
-                      "size":  525824
+                      "sha256":  "487BB60303A72499E8B3FE0B8DE5553B2E9D37C8921C011A78DCA09472F30C68",
+                      "size":  526336
                   },
                   {
                       "path":  "game/client/app/.godot/mono/temp/bin/Debug/Argentum.Client.pdb",
-                      "sha256":  "788D15677E97B730C259BB9BB007F582F6512D425914B3838523A9616309C50E",
-                      "size":  295284
+                      "sha256":  "CF6D8E445DB77AE62CB59D5B42D00BCB51100FB54F8C1002D878A0F4F62F53F3",
+                      "size":  295864
                   },
                   {
                       "path":  "game/client/app/.godot/mono/temp/bin/Debug/Argentum.Client.runtimeconfig.json",
@@ -126,13 +131,13 @@
                   },
                   {
                       "path":  "game/client/app/.godot/mono/temp/bin/Release/Argentum.Client.dll",
-                      "sha256":  "E20FDE1CA65FA75A181B23371B84BA8A9268D10F9EBC02FE6D03BB2648B8D20F",
-                      "size":  481280
+                      "sha256":  "29F760C6DB3D88875AEA60E6E8EABF38750903FA95DE7867E80F5984E1DEBB8A",
+                      "size":  481792
                   },
                   {
                       "path":  "game/client/app/.godot/mono/temp/bin/Release/Argentum.Client.pdb",
-                      "sha256":  "C1658432D9BE13846121B4E8D40988A70C51E4DB3D44815DF6FD6938527732FE",
-                      "size":  243620
+                      "sha256":  "1534BB4B06DD00A624B78CB86D9DD31F96EC7F6E107229ED3FF619B52FCF9DBC",
+                      "size":  244024
                   },
                   {
                       "path":  "game/client/app/.godot/mono/temp/bin/Release/Argentum.Client.runtimeconfig.json",
@@ -1281,8 +1286,8 @@
                   },
                   {
                       "path":  "game/client/app/src/Resources/GameResources.cs",
-                      "sha256":  "73F0D80154D560CD770F134DC7005036F32D5F35B934268DF81189A0330E2AD1",
-                      "size":  4176
+                      "sha256":  "B79210261AFE7775C6A7EC53AA7EC82FFEA45CE9DFA402B79973FA9AC02BB8EA",
+                      "size":  4144
                   },
                   {
                       "path":  "game/client/app/src/Resources/GameResources.cs.uid",
@@ -1301,8 +1306,8 @@
                   },
                   {
                       "path":  "game/client/app/src/Resources/HeadCatalog.cs",
-                      "sha256":  "BE64E875601650B5D1983FB2C4F29584F84F441872FFB0EB69C323B262D82DA6",
-                      "size":  3513
+                      "sha256":  "A77FEDE89A3983420FFF3AB0CDF24C11F15E3F11545C9F9EBF039B3B396241A9",
+                      "size":  4518
                   },
                   {
                       "path":  "game/client/app/src/Resources/HeadCatalog.cs.uid",
@@ -1386,8 +1391,8 @@
                   },
                   {
                       "path":  "game/client/app/src/Resources/TextureCache.cs",
-                      "sha256":  "B8336C093B56DBC4D0B860A2ADE85AB2C3DE8B13797368C243CF2C5B27844130",
-                      "size":  1189
+                      "sha256":  "47142180D5E9F627BAC4AF9D018D177EF1F3447ADA55462CAAF73F20F2F4395A",
+                      "size":  1642
                   },
                   {
                       "path":  "game/client/app/src/Resources/TextureCache.cs.uid",
@@ -39923,8 +39928,8 @@
     "delete":  [
 
                ],
-    "launcherVersion":  "0.1.8",
+    "launcherVersion":  "0.1.9",
     "launcherUrl":  "",
     "launcherSha256":  "",
-    "notes":  "Actualizacion incremental 0.1.8"
+    "notes":  "Actualizacion incremental 0.1.9"
 }
