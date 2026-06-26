@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Argentum.Client.Audio;
 using Argentum.Client.Core;
 using Argentum.Client.Gameplay;
@@ -20,6 +21,9 @@ public partial class Main : Node
     private SubViewportContainer? _worldHost;
     private Label? _hud;
     private Label? _fpsLabel;
+    private Control? _loadingOverlay;
+    private ProgressBar? _loadingProgress;
+    private Label? _loadingLabel;
     private GameplayHud? _gameplayHud;
     private GameplayConsole? _gameplayConsole;
     private GameplayChatInput? _gameplayChat;
@@ -42,27 +46,34 @@ public partial class Main : Node
     private bool _wasWarping;
     private Vector2I _lastLayoutWindowSize;
     private int _walkSendSeq;
+    private bool _lastSpellAssignMode;
+    private bool? _lastSpellCursorTargeting;
+    private static readonly bool VerboseInventoryUseLog = false;
 
-    public override void _Ready()
+    public override async void _Ready()
     {
         _worldView = GetNode<WorldView>("WorldLayer/WorldHost/WorldViewport/WorldView");
         _fogOverlay = GetNode<WorldFogOverlay>("WorldLayer/WorldHost/WorldViewport/WorldFogOverlay");
         _worldHost = GetNode<SubViewportContainer>("WorldLayer/WorldHost");
         _hud = GetNode<Label>("UiLayer/Hud");
         _fpsLabel = GetNode<Label>("UiLayer/FpsLabel");
+        var uiLayer = GetNode<CanvasLayer>("UiLayer");
+        CreateLoadingOverlay(uiLayer);
+        await ReportLoadingAsync("Preparando interfaz", 1);
         _gameplayHud = new GameplayHud();
-        GetNode<CanvasLayer>("UiLayer").AddChild(_gameplayHud);
+        uiLayer.AddChild(_gameplayHud);
         _gameplayConsole = new GameplayConsole();
-        GetNode<CanvasLayer>("UiLayer").AddChild(_gameplayConsole);
+        uiLayer.AddChild(_gameplayConsole);
         _gameplayChat = new GameplayChatInput();
-        GetNode<CanvasLayer>("UiLayer").AddChild(_gameplayChat);
+        uiLayer.AddChild(_gameplayChat);
         _commerceScreen = new CommerceScreen();
-        GetNode<CanvasLayer>("UiLayer").AddChild(_commerceScreen);
+        uiLayer.AddChild(_commerceScreen);
         _spellScreen = new SpellScreen();
-        GetNode<CanvasLayer>("UiLayer").AddChild(_spellScreen);
+        uiLayer.AddChild(_spellScreen);
         _floorItemTooltip = new FloorItemTooltip();
-        GetNode<CanvasLayer>("UiLayer").AddChild(_floorItemTooltip);
-        _resources = GameResources.TryLoad();
+        uiLayer.AddChild(_floorItemTooltip);
+        _resources = await GameResources.TryLoadAsync(ReportLoadingAsync);
+        HideLoadingOverlay();
         _audio = new AoAudio { Name = "AoAudio" };
         AddChild(_audio);
         ConfigureWindow();
@@ -72,7 +83,7 @@ public partial class Main : Node
         _loginFlow = new LoginFlow(_state, _resources, _worldView, _audio);
         _loginFlow.WorldEntered += OnWorldEntered;
         _loginFlow.StatusChanged += text => _hud!.Text = text;
-        GetNode<CanvasLayer>("UiLayer").AddChild(_loginFlow);
+        uiLayer.AddChild(_loginFlow);
 
         _pauseMenu = new PauseMenu();
         _pauseMenu.ContinuePressed += () => _pauseMenu.Close();
@@ -80,13 +91,91 @@ public partial class Main : Node
         _pauseMenu.LogoutPressed += () => _ = OnPauseLogoutAsync();
         _pauseMenu.QuitPressed += () => GetTree().Quit();
         _pauseMenu.SettingsChanged += OnPauseSettingsChanged;
-        GetNode<CanvasLayer>("UiLayer").AddChild(_pauseMenu);
+        uiLayer.AddChild(_pauseMenu);
 
         _hud.Text = _resources is null
             ? "AO · definí AO_RESOURCES para gráficos oficiales"
             : "AO · recursos cargados";
         _fpsLabel.Text = "FPS —";
         _worldView.Visible = false;
+    }
+
+    private void CreateLoadingOverlay(CanvasLayer uiLayer)
+    {
+        _loadingOverlay = new Control
+        {
+            Name = "LoadingOverlay",
+            MouseFilter = Control.MouseFilterEnum.Stop,
+        };
+        _loadingOverlay.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+
+        var background = new ColorRect
+        {
+            Color = new Color(0.035f, 0.04f, 0.055f, 0.96f),
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+        };
+        background.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        _loadingOverlay.AddChild(background);
+
+        var box = new VBoxContainer
+        {
+            CustomMinimumSize = new Vector2(420f, 92f),
+            Alignment = BoxContainer.AlignmentMode.Center,
+        };
+        box.SetAnchorsPreset(Control.LayoutPreset.Center);
+        box.OffsetLeft = -210f;
+        box.OffsetRight = 210f;
+        box.OffsetTop = -46f;
+        box.OffsetBottom = 46f;
+        _loadingOverlay.AddChild(box);
+
+        var title = new Label
+        {
+            Text = "Argentum Online",
+            HorizontalAlignment = HorizontalAlignment.Center,
+            ThemeTypeVariation = "HeaderSmall",
+        };
+        box.AddChild(title);
+
+        _loadingProgress = new ProgressBar
+        {
+            MinValue = 0,
+            MaxValue = 100,
+            Value = 0,
+            CustomMinimumSize = new Vector2(420f, 18f),
+            ShowPercentage = true,
+        };
+        box.AddChild(_loadingProgress);
+
+        _loadingLabel = new Label
+        {
+            Text = "Iniciando",
+            HorizontalAlignment = HorizontalAlignment.Center,
+        };
+        box.AddChild(_loadingLabel);
+
+        uiLayer.AddChild(_loadingOverlay);
+    }
+
+    private async Task ReportLoadingAsync(string text, int percent)
+    {
+        if (_loadingProgress is not null)
+        {
+            _loadingProgress.Value = Math.Clamp(percent, 0, 100);
+        }
+        if (_loadingLabel is not null)
+        {
+            _loadingLabel.Text = text;
+        }
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+    }
+
+    private void HideLoadingOverlay()
+    {
+        _loadingOverlay?.QueueFree();
+        _loadingOverlay = null;
+        _loadingProgress = null;
+        _loadingLabel = null;
     }
 
     public override void _Input(InputEvent @event)
@@ -198,18 +287,27 @@ public partial class Main : Node
         {
             if (ItemAffixes.IsEquipmentType(def.ObjType))
             {
-                GD.Print($"Main: TryInventoryUseClick -> SendEquipAsync slot={slot} obj={def.Name} objType={def.ObjType}");
+                if (VerboseInventoryUseLog)
+                {
+                    GD.Print($"Main: TryInventoryUseClick -> SendEquipAsync slot={slot} obj={def.Name} objType={def.ObjType}");
+                }
                 _ = _gameplay.SendEquipAsync(slot);
             }
             else
             {
-                GD.Print($"Main: TryInventoryUseClick -> SendUseItemAsync slot={slot} obj={def.Name} objType={def.ObjType}");
+                if (VerboseInventoryUseLog)
+                {
+                    GD.Print($"Main: TryInventoryUseClick -> SendUseItemAsync slot={slot} obj={def.Name} objType={def.ObjType}");
+                }
                 _ = _gameplay.SendUseItemAsync(slot);
             }
         }
         else
         {
-            GD.Print($"Main: TryInventoryUseClick -> SendUseItemAsync slot={slot} (no def)");
+            if (VerboseInventoryUseLog)
+            {
+                GD.Print($"Main: TryInventoryUseClick -> SendUseItemAsync slot={slot} (no def)");
+            }
             _ = _gameplay.SendUseItemAsync(slot);
         }
         return true;
@@ -691,15 +789,25 @@ public partial class Main : Node
     {
         if (_gameplayHud is not null)
         {
-            _gameplayHud.SpellAssignMode = _spellScreen?.IsOpen == true;
+            var spellAssignMode = _spellScreen?.IsOpen == true;
+            if (_lastSpellAssignMode != spellAssignMode)
+            {
+                _lastSpellAssignMode = spellAssignMode;
+                _gameplayHud.SpellAssignMode = spellAssignMode;
+                _gameplayHud.Refresh();
+            }
         }
-        _gameplayHud?.Refresh();
         UpdateSpellCursor();
     }
 
     private void UpdateSpellCursor()
     {
         var targeting = _gameplay?.World.UsingSkill == 1;
+        if (_lastSpellCursorTargeting == targeting)
+        {
+            return;
+        }
+        _lastSpellCursorTargeting = targeting;
         if (targeting)
         {
             Input.SetDefaultCursorShape(Input.CursorShape.Cross);
